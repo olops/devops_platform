@@ -21,6 +21,7 @@ resource "helm_release" "sonarqube" {
   version    = "10.6.1+3163"
   namespace   = "sonarqube"
   create_namespace = true
+  timeout = 600
   values = [
     "${file("${path.module}/charts/values.yaml")}"
   ]

@@ -4,6 +4,10 @@ resource "google_container_cluster" "default" {
   location           = local.location
   initial_node_count = 1
 
+  node_config {
+    machine_type = "e2-standard-2"
+  }
+
   addons_config {
     http_load_balancing {
       disabled = false
