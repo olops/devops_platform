@@ -81,14 +81,15 @@ global:
     provider: nginx
     class: nginx
     annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "64m"
       kubernetes.io/ingress.allow-http: "false"
       nginx.ingress.kubernetes.io/ssl-passthrough: "true"
       nginx.ingress.kubernetes.io/secure-backends: "true"
-      nginx.ingress.kubernetes.io/proxy-body-size: 6000m
+      # cert-manager.io/cluster-issuer: <>
     enabled: true
     tls:
       enabled: true
-    #   secretName:
+      # secretName:
     path: /
     pathType: Prefix
 
@@ -1322,6 +1323,9 @@ gitlab:
     hpa:
       minReplicas: 1
       maxReplicas: 1
+    ingress:
+      tls:
+        secretName: cert-gitlab-ws
   ## https://docs.gitlab.com/charts/charts/gitlab/sidekiq
   #   sidekiq:
   #     enabled: false
@@ -1357,3 +1361,6 @@ registry:
   hpa:
     minReplicas: 1
     maxReplicas: 1
+  ingress:
+    tls:
+      secretName: cert-gitlab-registry

@@ -103,7 +103,7 @@ ingress:
   enabled: true
   # Used to create an Ingress record.
   hosts:
-    - name: ""
+    - name: "sonarqube.gaudiy-bongalos.com"
       # Different clouds or configurations might need /* as the default path
       # path: /
       # For additional control over serviceName and servicePort
@@ -117,9 +117,10 @@ ingress:
     kubernetes.io/ingress.allow-http: "false"
     nginx.ingress.kubernetes.io/ssl-passthrough: "true"
     nginx.ingress.kubernetes.io/secure-backends: "true"
+    # cert-manager.io/cluster-issuer: http-01-production
 
   # Set the ingressClassName on the ingress record
-  ingressClassName: ""
+  ingressClassName: "nginx"
 
 # Additional labels for Ingress manifest file
   # labels:
@@ -127,7 +128,9 @@ ingress:
   #  traffic-type: internal
   tls:
   # Secrets must be manually created in the namespace. To generate a self-signed certificate (and private key) and then create the secret in the cluster please refer to official documentation available at https://kubernetes.github.io/ingress-nginx/user-guide/tls/#tls-secrets
-    - hosts: []
+    - hosts:
+        - "sonarqube.gaudiy-bongalos.com"
+      secretName: sonarqube-cert
 
 route:
   enabled: false
