@@ -7,9 +7,10 @@ k8s=false
 ingress=false
 certman=false
 sonarqube=false
+gitlab=false
 all=false
 
-TEMP=`getopt --long -o "w:ascik" "$@"`
+TEMP=`getopt --long -o "w:agscik" "$@"`
 eval set -- "$TEMP"
 while true ; do
     case "$1" in
@@ -31,6 +32,10 @@ while true ; do
         ;;
         -s)
             sonarqube=true
+            shift 1
+        ;;
+        -g)
+            gitlab=true
             shift 1
         ;;
         -a )
@@ -57,9 +62,10 @@ fi
 
 if $certman ; then 
     sonarqube=true ;
+    gitlab=true ;
 fi
 
-echo -e "ws=$ws\nk8s=$k8s\ningress=$ingress\ncertman=$certman\nsonarqube=$sonarqube"
+echo -e "ws=$ws\nk8s=$k8s\ningress=$ingress\ncertman=$certman\nsonarqube=$sonarqube\ngitlab=$gitlab"
 
 echo "creating resources for $ws environment"
 
@@ -77,6 +83,7 @@ destroy() {
     fi
 }
 
+if $gitlab ; then destroy platform/tools/gitlab ; fi
 if $sonarqube ; then destroy platform/tools/sonarqube ; fi
 if $certman ; then destroy platform/infra/k8s/cert-manager ; fi
 if $ingress ; then destroy platform/infra/k8s/ingress-controller ; fi
