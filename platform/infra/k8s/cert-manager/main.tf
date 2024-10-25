@@ -17,32 +17,23 @@ resource "helm_release" "cert-manager" {
   ]
 }
 
-resource "kubernetes_manifest" "clusterissuer_letsencrypt" {
-  manifest = {
-    "apiVersion" = "cert-manager.io/v1"
-    "kind" = "ClusterIssuer"
-    "metadata" = {
-      "name" = "clusterissuer-letsencrypt-${terraform.workspace}"
-    }
-    "spec" = {
-      "acme" = {
-        "email" = var.cert_issuer_email
-        "privateKeySecretRef" = {
-          "name" = "letsencrypt-${terraform.workspace}"
-        }
-        "server" = "https://acme-v02.api.letsencrypt.org/directory"
-        "solvers" = [
-          {
-            "http01" = {
-              "ingress" = {
-                "class" = var.ingress_classname
-              }
-            }
-          },
-        ]
-      }
-    }
-  }
+resource "kubectl_manifest" "clusterissuer" {
+  yaml_body = <<YAML
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: clusterissuer-letsencrypt-dev
+spec:
+  acme:
+    email: nbongalos@hotmail.com
+    privateKeySecretRef:
+      name: letsencrypt-dev
+    server: https://acme-v02.api.letsencrypt.org/directory
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+YAML
 
   depends_on = [
     helm_release.cert-manager

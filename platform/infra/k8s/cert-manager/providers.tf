@@ -14,6 +14,10 @@ terraform {
       source = "hashicorp/helm"
       version = "2.16.1"
     }
+    kubectl = {
+      source = "gavinbunney/kubectl"
+      version = "1.14.0"
+    }
   }
 
   backend "gcs" {
@@ -54,4 +58,11 @@ provider "helm" {
     token                  = data.google_client_config.default.access_token
     cluster_ca_certificate = base64decode(data.google_container_cluster.default.master_auth[0].cluster_ca_certificate)
   }
+}
+
+provider "kubectl" {
+  host                   = "https://${data.google_container_cluster.default.endpoint}"
+  cluster_ca_certificate = base64decode(data.google_container_cluster.default.master_auth[0].cluster_ca_certificate)
+  token                  = data.google_client_config.default.access_token
+  load_config_file       = false
 }
