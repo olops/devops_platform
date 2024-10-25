@@ -14,14 +14,20 @@ resource "google_dns_record_set" "sonarqube" {
   ttl          = 300
 }
 
+resource "kubernetes_namespace" "sonarqube" {
+  metadata {
+    name = "sonarqube"
+  }
+}
+
 resource "helm_release" "sonarqube" {
   name       = "sonarqube"
   repository = "https://SonarSource.github.io/helm-chart-sonarqube"
   chart      = "sonarqube"
   version    = "10.6.1+3163"
-  namespace   = "sonarqube"
-  create_namespace = true
+  namespace   = kubernetes_namespace.sonarqube.metadata[0].name
   timeout = 600
+  wait_for_jobs = true
   values = [
     "${file("${path.module}/charts/values.yaml")}"
   ]

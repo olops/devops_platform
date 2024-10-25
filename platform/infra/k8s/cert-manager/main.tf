@@ -1,11 +1,17 @@
 
+resource "kubernetes_namespace" "cert-manager" {
+  metadata {
+    name = "cert-manager"
+  }
+}
+
 resource "helm_release" "cert-manager" {
   name       = "cert-manager"
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
   version    = "1.16.1"
-  namespace   = "cert-manager"
-  create_namespace = true
+  namespace   = kubernetes_namespace.cert-manager.metadata[0].name
+  wait_for_jobs = true
   values = [
     "${file("${path.module}/charts/values.yaml")}"
   ]
