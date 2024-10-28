@@ -47,8 +47,8 @@ defaultRules:
     kubeApiserverBurnrate: true
     kubeApiserverHistogram: true
     kubeApiserverSlos: true
-    kubeControllerManager: false
-    kubelet: false
+    kubeControllerManager: true
+    kubelet: true
     kubeProxy: true
     kubePrometheusGeneral: true
     kubePrometheusNodeRecording: true
@@ -56,8 +56,8 @@ defaultRules:
     kubernetesResources: true
     kubernetesStorage: true
     kubernetesSystem: true
-    kubeSchedulerAlerting: false
-    kubeSchedulerRecording: false
+    kubeSchedulerAlerting: true
+    kubeSchedulerRecording: true
     kubeStateMetrics: true
     network: true
     node: true
@@ -300,6 +300,14 @@ alertmanager:
       - receiver: 'Mail Alert'
         matchers:
           - alertname =~ "InfoInhibitor|Watchdog"
+      # - match:
+      #     alertname: heartbeat
+      #   receiver: 'grafana-oncall-heartbeat'
+      #   group_wait: 0s
+      #   group_interval: 1m
+      #   repeat_interval: 50s
+      # - receiver: "oncall"
+      #   group_by: [alertname, datacenter, app]
     receivers:
     - name: 'null'
     - name: 'Mail Alert'
@@ -307,8 +315,8 @@ alertmanager:
         - smarthost: 'email-smtp.ap-northeast-1.amazonaws.com:587'
           auth_username: 'AKIA5FJOSNSTSN4U6NZR'
           auth_password: "BEzrKVTCM96M6x5cCj7aHgaog5Cu9RQoYQH3nUwXLIkA"
-          from: 'alertmanager-poc@poc-ahs-hcm.com'
-          to: 'n.bongalos.xc@hitachi-kenki.com'
+          from: 'alertmanager@gaudiy-bongalos.com'
+          to: 'nbongalos@hotmail.com'
           headers:
             subject: 'Prometheus Mail Alerts'
     templates:
@@ -364,7 +372,7 @@ alertmanager:
 
     # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
     # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
-    ingressClassName: ""
+    ingressClassName: nginx
 
     annotations:
       kubernetes.io/ingress.allow-http: "false"
@@ -920,7 +928,7 @@ grafana:
     ## IngressClassName for Grafana Ingress.
     ## Should be provided if Ingress is enable.
     ##
-    ingressClassName: ""
+    ingressClassName: nginx
 
     ## Annotations for Grafana Ingress
     ##
@@ -928,6 +936,7 @@ grafana:
       kubernetes.io/ingress.allow-http: "false"
       nginx.ingress.kubernetes.io/ssl-passthrough: "true"
       nginx.ingress.kubernetes.io/secure-backends: "true"
+      cert-manager.io/cluster-issuer: clusterissuer-letsencrypt-dev
 
     ## Labels to be added to the Ingress
     ##
@@ -948,6 +957,7 @@ grafana:
     ##
     tls:
       - hosts: []
+        secretName: sonarqube-grafana
 
   sidecar:
     dashboards:
@@ -1022,19 +1032,8 @@ grafana:
 
   ## Configure additional grafana datasources (passed through tpl)
   ## ref: http://docs.grafana.org/administration/provisioning/#datasources
+  # TODO: need to parameterid and should be optional. as loki is separate module.
   additionalDataSources:
-  # - name: prometheus-sample
-  #   access: proxy
-  #   basicAuth: true
-  #   basicAuthPassword: pass
-  #   basicAuthUser: daco
-  #   editable: false
-  #   jsonData:
-  #       tlsSkipVerify: true
-  #   orgId: 1
-  #   type: prometheus
-  #   url: https://{{ printf "%s-prometheus.svc" .Release.Name }}:9090
-  #   version: 1
     - name: Loki
       type: loki
       access: proxy
@@ -1084,12 +1083,12 @@ grafana:
   grafana.ini:
     server:
       root_url: ""
-    # database:
-    #   type: postgres
-    #   host: grafana-db-postgresql:5432
-    #   name: grafana
-    #   user: grafana
-    #   password: grafana
+    database:
+      type: postgres
+      host: null
+      name: null
+      user: null
+      password: null
     metrics:
       enabled: true
       disable_total_stats: false
@@ -1193,7 +1192,7 @@ kubeApiServer:
 ## Component scraping the kubelet and kubelet-hosted cAdvisor
 ##
 kubelet:
-  enabled: false
+  enabled: true
   namespace: kube-system
 
   serviceMonitor:
@@ -1385,7 +1384,7 @@ kubelet:
 ## Component scraping the kube controller manager
 ##
 kubeControllerManager:
-  enabled: false
+  enabled: true
 
   ## If your kube controller manager is not deployed as a pod, specify IPs it can be found on
   ##
@@ -1714,7 +1713,7 @@ kubeEtcd:
 ## Component scraping kube scheduler
 ##
 kubeScheduler:
-  enabled: false
+  enabled: true
 
   ## If your kube scheduler is not deployed as a pod, specify IPs it can be found on
   ##
@@ -1883,9 +1882,6 @@ kubeStateMetrics:
 ## Configuration for kube-state-metrics subchart
 ##
 kube-state-metrics:
-  autosharding:
-    enabled: true
-  replicas: 1
   namespaceOverride: ""
   rbac:
     create: true
@@ -2038,9 +2034,6 @@ prometheus-node-exporter:
     ## If true, create PSPs for node-exporter
     ##
     pspEnabled: false
-  tolerations:
-    - key: runner
-      operator: Exists
 
 ## Manages Prometheus and Alertmanager components
 ##
@@ -2258,7 +2251,7 @@ prometheusOperator:
   ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/helm/prometheus-operator/README.md
   ##
   kubeletService:
-    enabled: false
+    enabled: true
     namespace: kube-system
     ## Use '{{ template "kube-prometheus-stack.fullname" . }}-kubelet' by default
     name: ""
@@ -2772,9 +2765,10 @@ prometheus:
 
     # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
     # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
-    ingressClassName: ""
+    ingressClassName: nginx
 
-    annotations: {}
+    annotations:
+      cert-manager.io/cluster-issuer: clusterissuer-letsencrypt-dev
     labels: {}
 
     ## Redirect ingress to an additional defined port on the service
@@ -2800,8 +2794,8 @@ prometheus:
     ## Secret must be manually created in the namespace
     ##
     tls:
-      # - secretName: prometheus-general-tls
       - hosts: []
+        secretName: sonarqube-prometheus
 
   ## Configuration for creating an Ingress that will map to each Prometheus replica service
   ## prometheus.servicePerReplica must be enabled
@@ -3020,7 +3014,7 @@ prometheus:
 
     ## enable --web.enable-remote-write-receiver flag on prometheus-server
     ##
-    enableRemoteWriteReceiver: true
+    enableRemoteWriteReceiver: false
 
     ## Name of the external label used to denote replica name
     ##
@@ -3295,12 +3289,13 @@ prometheus:
     storageSpec:
     ## Using PersistentVolumeClaim
     ##
-      # volumeClaimTemplate:
-      #   spec:
-      #     accessModes: ["ReadWriteOnce"]
-      #     resources:
-      #       requests:
-      #         storage: 50Gi
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+        selector: {}
 
     ## Using tmpfs volume
     ##
@@ -3326,47 +3321,32 @@ prometheus:
     ## port to 2379 and allow etcd scraping provided it is running on all Kubernetes master nodes
     ##
     additionalScrapeConfigs: []
-    # - job_name: kube-etcd
-    #   kubernetes_sd_configs:
-    #     - role: node
-    #   scheme: https
-    #   tls_config:
-    #     ca_file:   /etc/prometheus/secrets/etcd-client-cert/etcd-ca
-    #     cert_file: /etc/prometheus/secrets/etcd-client-cert/etcd-client
-    #     key_file:  /etc/prometheus/secrets/etcd-client-cert/etcd-client-key
-    #   relabel_configs:
-    #   - action: labelmap
-    #     regex: __meta_kubernetes_node_label_(.+)
-    #   - source_labels: [__address__]
-    #     action: replace
-    #     targetLabel: __address__
-    #     regex: ([^:;]+):(\d+)
-    #     replacement: ${1}:2379
-    #   - source_labels: [__meta_kubernetes_node_name]
-    #     action: keep
-    #     regex: .*mst.*
-    #   - source_labels: [__meta_kubernetes_node_name]
-    #     action: replace
-    #     targetLabel: node
-    #     regex: (.*)
-    #     replacement: ${1}
-    #   metric_relabel_configs:
-    #   - regex: (kubernetes_io_hostname|failure_domain_beta_kubernetes_io_region|beta_kubernetes_io_os|beta_kubernetes_io_arch|beta_kubernetes_io_instance_type|failure_domain_beta_kubernetes_io_zone)
-    #     action: labeldrop
-    #
-    ## If scrape config contains a repetitive section, you may want to use a template.
-    ## In the following example, you can see how to define `gce_sd_configs` for multiple zones
-    # additionalScrapeConfigs: |
-    #  - job_name: "node-exporter"
-    #    gce_sd_configs:
-    #    {{range $zone := .Values.gcp_zones}}
-    #    - project: "project1"
-    #      zone: "{{$zone}}"
-    #      port: 9100
-    #    {{end}}
-    #    relabel_configs:
-    #    ...
-
+      # - job_name: minio_cluster
+      #   metrics_path: /minio/v2/metrics/cluster
+      #   static_configs:
+      #     - targets:
+      #       - minio.minio:9000
+      # - job_name: minio_bucket
+      #   metrics_path: /minio/v2/metrics/bucket
+      #   static_configs:
+      #     - targets:
+      #       - minio.minio:9000
+      # - job_name: sonarqube_ce
+      #   metrics_path: /api/monitoring/metrics
+      #   basic_auth:
+      #     username: 'squ_a1534aadac8e337f3e27f0a5e1070096ec389f0f'
+      #     password: ''
+      #   static_configs:
+      #     - targets:
+      #       - sonarqube-sonarqube.sonarqube:9000
+      # - job_name: velero
+      #   static_configs:
+      #     - targets:
+      #       - velero.velero:8085
+      # - job_name: grafana_metrics
+      #   static_configs:
+      #     - targets:
+      #       - kube-prometheus-stack-grafana:80
 
     ## If additional scrape configurations are already deployed in a single secret file you can use this section.
     ## Expected values are the secret name and key
