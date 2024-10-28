@@ -81,7 +81,7 @@ global:
     provider: nginx
     class: nginx
     annotations:
-      nginx.ingress.kubernetes.io/proxy-body-size: "64m"
+      nginx.ingress.kubernetes.io/proxy-body-size: "1000m"
       kubernetes.io/ingress.allow-http: "false"
       nginx.ingress.kubernetes.io/ssl-passthrough: "true"
       nginx.ingress.kubernetes.io/secure-backends: "true"
@@ -599,7 +599,7 @@ global:
 
   ## https://docs.gitlab.com/charts/charts/gitlab/kas/
   kas:
-    enabled: false
+    enabled: true
     service:
       apiExternalPort: 8153 # port for connections from the GitLab backend
     tls:
@@ -1281,8 +1281,11 @@ gitlab-runner:
       [[runners]]
         [runners.kubernetes]
         image = "ubuntu:22.04"
+        privileged = true
         dns_policy = "cluster-first-with-host-net"
         namespace = "runner"
+        cpu_request = ".2"
+        memory_request = "300Mi"
         {{- if .Values.global.minio.enabled }}
         [runners.cache]
           Type = "s3"
@@ -1337,7 +1340,12 @@ gitlab:
   ## https://docs.gitlab.com/charts/charts/gitlab/gitlab-pages
   #   gitlab-pages:
   ## https://docs.gitlab.com/charts/charts/gitlab/kas
-  #   kas:
+  kas:
+    minReplicas: 1
+    maxReplicas: 1
+    ingress:
+      tls:
+        secretName: cert-gitlab-kas
   ## https://docs.gitlab.com/charts/charts/gitlab/praefect
   #   praefect:
   gitlab-exporter:
@@ -1364,3 +1372,8 @@ registry:
   ingress:
     tls:
       secretName: cert-gitlab-registry
+
+minio:
+  ingress:
+    tls:
+      secretName: cert-gitlab-minio
