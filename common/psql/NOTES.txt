@@ -1,0 +1,10 @@
+
+helm upgrade --install grafana-db bitnami/postgresql \
+  --namespace monitor \
+  --create-namespace \
+  --timeout 600s \
+  --version 13.1.5 \
+  --values charts/values.yaml \
+  --set global.postgresql.auth.username=grafana \
+  --set global.postgresql.auth.password=grafana \
+  --set global.postgresql.auth.database=grafana
