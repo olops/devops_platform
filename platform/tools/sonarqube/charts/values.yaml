@@ -117,7 +117,6 @@ ingress:
     kubernetes.io/ingress.allow-http: "false"
     nginx.ingress.kubernetes.io/ssl-passthrough: "true"
     nginx.ingress.kubernetes.io/secure-backends: "true"
-    # cert-manager.io/cluster-issuer: http-01-production
 
   # Set the ingressClassName on the ingress record
   ingressClassName: "nginx"
@@ -298,7 +297,7 @@ initFs:
       add: ["CHOWN"]
 
 prometheusExporter:
-  enabled: false
+  enabled: true
   # jmx_prometheus_javaagent version to download from Maven Central
   version: "0.17.2"
   # Alternative full download URL for the jmx_prometheus_javaagent.jar (overrides prometheusExporter.version)
@@ -398,12 +397,12 @@ annotations: {}
 ## Adjust these values to your needs, you can find more details on the main README of the chart.
 resources:
   limits:
-    cpu: 800m
+    cpu: 2000m
     memory: 6144M
     ephemeral-storage: 512000M
   requests:
-    cpu: 400m
-    memory: 2048M
+    cpu: 1000m
+    memory: 3000M
     ephemeral-storage: 1536M
 
 persistence:

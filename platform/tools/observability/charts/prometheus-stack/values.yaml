@@ -258,7 +258,7 @@ alertmanager:
   ## https://github.com/kubernetes/kubernetes/issues/45398
   ##
   podDisruptionBudget:
-    enabled: false
+    enabled: true
     minAvailable: 1
     maxUnavailable: ""
 
@@ -701,7 +701,7 @@ alertmanager:
 
     ## Size is the expected size of the alertmanager cluster. The controller will eventually make the size of the
     ## running cluster equal to the expected size.
-    replicas: 1
+    replicas: 2
 
     ## Time duration Alertmanager shall retain data for. Default is '120h', and must match the regular expression
     ## [0-9]+(ms|s|m|h) (milliseconds seconds minutes hours).
@@ -894,6 +894,12 @@ alertmanager:
 ##
 grafana:
   enabled: true
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 1
+  podDisruptionBudget:
+    minAvailable: 0
   namespaceOverride: ""
 
   ## ForceDeployDatasources Create datasource configmap even if grafana deployment has been disabled
@@ -1882,6 +1888,9 @@ kubeStateMetrics:
 ## Configuration for kube-state-metrics subchart
 ##
 kube-state-metrics:
+  autosharding:
+    enabled: true
+  replicas: 1
   namespaceOverride: ""
   rbac:
     create: true
@@ -2705,7 +2714,7 @@ prometheus:
   ## https://github.com/kubernetes/kubernetes/issues/45398
   ##
   podDisruptionBudget:
-    enabled: false
+    enabled: true
     minAvailable: 1
     maxUnavailable: ""
 
@@ -3014,7 +3023,7 @@ prometheus:
 
     ## enable --web.enable-remote-write-receiver flag on prometheus-server
     ##
-    enableRemoteWriteReceiver: false
+    enableRemoteWriteReceiver: true
 
     ## Name of the external label used to denote replica name
     ##
