@@ -713,11 +713,11 @@ write:
   replicas: 2
   autoscaling:
     # -- Enable autoscaling for the write.
-    enabled: false
+    enabled: true
     # -- Minimum autoscaling replicas for the write.
     minReplicas: 2
     # -- Maximum autoscaling replicas for the write.
-    maxReplicas: 6
+    maxReplicas: 4
     # -- Target CPU utilisation percentage for the write.
     targetCPUUtilizationPercentage: 60
     # -- Target memory utilization percentage for the write.
@@ -898,11 +898,11 @@ read:
   replicas: 2
   autoscaling:
     # -- Enable autoscaling for the read, this is only used if `queryIndex.enabled: true`
-    enabled: false
+    enabled: true
     # -- Minimum autoscaling replicas for the read
     minReplicas: 2
     # -- Maximum autoscaling replicas for the read
-    maxReplicas: 6
+    maxReplicas: 4
     # -- Target CPU utilisation percentage for the read
     targetCPUUtilizationPercentage: 60
     # -- Target memory utilisation percentage for the read
@@ -1003,11 +1003,11 @@ backend:
   replicas: 2
   autoscaling:
     # -- Enable autoscaling for the backend.
-    enabled: false
+    enabled: true
     # -- Minimum autoscaling replicas for the backend.
     minReplicas: 2
     # -- Maximum autoscaling replicas for the backend.
-    maxReplicas: 6
+    maxReplicas: 4
     # -- Target CPU utilization percentage for the backend.
     targetCPUUtilizationPercentage: 60
     # -- Target memory utilization percentage for the backend.
@@ -1246,16 +1246,16 @@ gateway:
   # -- Specifies whether the gateway should be enabled
   enabled: true
   # -- Number of replicas for the gateway
-  replicas: 1
+  replicas: 2
   # -- Enable logging of 2xx and 3xx HTTP requests
   verboseLogging: true
   autoscaling:
     # -- Enable autoscaling for the gateway
-    enabled: false
+    enabled: true
     # -- Minimum autoscaling replicas for the gateway
-    minReplicas: 1
+    minReplicas: 2
     # -- Maximum autoscaling replicas for the gateway
-    maxReplicas: 3
+    maxReplicas: 4
     # -- Target CPU utilisation percentage for the gateway
     targetCPUUtilizationPercentage: 60
     # -- Target memory utilisation percentage for the gateway
@@ -1481,13 +1481,13 @@ tracing:
 # Configuration for `minio` child chart
 # -------------------------------------
 minio:
-  enabled: false
-  replicas: 1
+  enabled: true
+  replicas: 2
   # Minio requires 2 to 16 drives for erasure code (drivesPerNode * replicas)
   # https://docs.min.io/docs/minio-erasure-code-quickstart-guide
   # Since we only have 1 replica, that means 2 drives must be used.
   drivesPerNode: 2
-  rootUser: enterprise-logs
+  rootUser: superuser
   rootPassword: supersecret
   buckets:
     - name: chunks
@@ -1500,7 +1500,7 @@ minio:
       policy: none
       purge: false
   persistence:
-    size: 5Gi
+    size: 30Gi
   resources:
     requests:
       cpu: 100m

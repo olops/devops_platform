@@ -81,7 +81,7 @@ global:
     provider: nginx
     class: nginx
     annotations:
-      nginx.ingress.kubernetes.io/proxy-body-size: "1000m"
+      nginx.ingress.kubernetes.io/proxy-body-size: "6000m"
       kubernetes.io/ingress.allow-http: "false"
       nginx.ingress.kubernetes.io/ssl-passthrough: "true"
       nginx.ingress.kubernetes.io/secure-backends: "true"
@@ -112,7 +112,7 @@ global:
 
   # Override enablement of ServiceMonitor and PodMonitor objects.
   monitoring:
-    enabled: false
+    enabled: true
 
   gitlab:
     ## Enterprise license for this GitLab installation
@@ -685,8 +685,8 @@ global:
     tokenIssuer: gitlab-issuer
 
   pages:
-    enabled: false
-    accessControl: false
+    enabled: true
+    accessControl: true
     path:
     host:
     port:
@@ -1028,11 +1028,11 @@ haproxy:
 ## Installation & configuration of stable/prometheus
 ## See requirements.yaml for current version
 prometheus:
-  install: false
+  install: true
   rbac:
     create: true
   alertmanager:
-    enabled: false
+    enabled: true
   alertmanagerFiles:
     alertmanager.yml: {}
   kubeStateMetrics:
@@ -1050,126 +1050,10 @@ prometheus:
   serverFiles:
     prometheus.yml:
       scrape_configs:
-        - job_name: prometheus
+        - job_name: gitlab_prometheus
           static_configs:
             - targets:
                 - localhost:9090
-        - job_name: kubernetes-apiservers
-          kubernetes_sd_configs:
-            - role: endpoints
-          scheme: https
-          tls_config:
-            ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-            insecure_skip_verify: true
-          bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-          relabel_configs:
-            - source_labels:
-                [
-                  __meta_kubernetes_namespace,
-                  __meta_kubernetes_service_name,
-                  __meta_kubernetes_endpoint_port_name,
-                ]
-              action: keep
-              regex: default;kubernetes;https
-        - job_name: kubernetes-pods
-          kubernetes_sd_configs:
-            - role: pod
-          relabel_configs:
-            - source_labels:
-                [__meta_kubernetes_pod_annotation_gitlab_com_prometheus_scrape]
-              action: keep
-              regex: true
-            - source_labels:
-                [__meta_kubernetes_pod_annotation_gitlab_com_prometheus_scheme]
-              action: replace
-              regex: (https?)
-              target_label: __scheme__
-            - source_labels:
-                [__meta_kubernetes_pod_annotation_gitlab_com_prometheus_path]
-              action: replace
-              target_label: __metrics_path__
-              regex: (.+)
-            - source_labels:
-                [
-                  __address__,
-                  __meta_kubernetes_pod_annotation_gitlab_com_prometheus_port,
-                ]
-              action: replace
-              regex: ([^:]+)(?::\d+)?;(\d+)
-              replacement: $1:$2
-              target_label: __address__
-            - action: labelmap
-              regex: __meta_kubernetes_pod_label_(.+)
-            - source_labels: [__meta_kubernetes_namespace]
-              action: replace
-              target_label: kubernetes_namespace
-            - source_labels: [__meta_kubernetes_pod_name]
-              action: replace
-              target_label: kubernetes_pod_name
-        - job_name: kubernetes-service-endpoints
-          kubernetes_sd_configs:
-            - role: endpoints
-          relabel_configs:
-            - action: keep
-              regex: true
-              source_labels:
-                - __meta_kubernetes_service_annotation_gitlab_com_prometheus_scrape
-            - action: replace
-              regex: (https?)
-              source_labels:
-                - __meta_kubernetes_service_annotation_gitlab_com_prometheus_scheme
-              target_label: __scheme__
-            - action: replace
-              regex: (.+)
-              source_labels:
-                - __meta_kubernetes_service_annotation_gitlab_com_prometheus_path
-              target_label: __metrics_path__
-            - action: replace
-              regex: ([^:]+)(?::\d+)?;(\d+)
-              replacement: $1:$2
-              source_labels:
-                - __address__
-                - __meta_kubernetes_service_annotation_gitlab_com_prometheus_port
-              target_label: __address__
-            - action: labelmap
-              regex: __meta_kubernetes_service_label_(.+)
-            - action: replace
-              source_labels:
-                - __meta_kubernetes_namespace
-              target_label: kubernetes_namespace
-            - action: replace
-              source_labels:
-                - __meta_kubernetes_service_name
-              target_label: kubernetes_name
-            - action: replace
-              source_labels:
-                - __meta_kubernetes_pod_node_name
-              target_label: kubernetes_node
-        - job_name: kubernetes-services
-          metrics_path: /probe
-          params:
-            module: [http_2xx]
-          kubernetes_sd_configs:
-            - role: service
-          relabel_configs:
-            - source_labels:
-                [
-                  __meta_kubernetes_service_annotation_gitlab_com_prometheus_probe,
-                ]
-              action: keep
-              regex: true
-            - source_labels: [__address__]
-              target_label: __param_target
-            - target_label: __address__
-              replacement: blackbox
-            - source_labels: [__param_target]
-              target_label: instance
-            - action: labelmap
-              regex: __meta_kubernetes_service_label_(.+)
-            - source_labels: [__meta_kubernetes_namespace]
-              target_label: kubernetes_namespace
-            - source_labels: [__meta_kubernetes_service_name]
-              target_label: kubernetes_name
 
 ## Configuration of Redis
 ## https://docs.gitlab.com/charts/architecture/decisions#redis
@@ -1180,7 +1064,9 @@ redis:
     existingSecret: gitlab-redis-secret
     existingSecretKey: redis-password
     usePasswordFiles: true
-  architecture: standalone
+  architecture: replication
+  replica:
+    replicaCount: 2
   cluster:
     enabled: false
   metrics:
@@ -1314,7 +1200,8 @@ traefik:
 gitlab:
   ## https://docs.gitlab.com/charts/charts/gitlab/toolbox
   toolbox:
-    replicas: 1
+    enabled: true
+    replicas: 2
     antiAffinityLabels:
       matchLabels:
         app: gitaly
@@ -1323,33 +1210,68 @@ gitlab:
   #     enabled: false
   ## https://docs.gitlab.com/charts/charts/gitlab/webservice
   webservice:
+    enabled: true
+    metrics:
+      enabled: true
     hpa:
-      minReplicas: 1
-      maxReplicas: 1
+      minReplicas: 2
+      maxReplicas: 10
+      cpu:
+        targetAverageUtilization: "80"
+      memory:
+        targetAverageUtilization: "80"
+    pdb:
+      maxUnavailable: 1
+    monitoring:
+      ipWhitelist:
+        - 0.0.0.0/0
+    workhorse:
+      monitoring:
+        exporter:
+          enabled: true
     ingress:
       tls:
         secretName: cert-gitlab-ws
   ## https://docs.gitlab.com/charts/charts/gitlab/sidekiq
-  #   sidekiq:
-  #     enabled: false
+  sidekiq:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    maxUnavailable: 1
   ## https://docs.gitlab.com/charts/charts/gitlab/gitaly
-  #   gitaly:
+  gitaly:
+    shell:
+      concurrency:
+        - rpc: /gitaly.SmartHTTPService/PostUploadPackWithSidechannel
+          maxPerRepo: 60
+        - rpc: /gitaly.SSHService/SSHUploadPackWithSidechannel
+          maxPerRepo: 60
+    packObjectsCache:
+      enabled: true
+    metrics:
+      enabled: true
+    persistence:
+      size: 50Gi
   ## https://docs.gitlab.com/charts/charts/gitlab/gitlab-shell
   gitlab-shell:
-    enabled: false
+    enabled: true
+    replicaCount: 2
   ## https://docs.gitlab.com/charts/charts/gitlab/gitlab-pages
-  #   gitlab-pages:
+  gitlab-pages:
+    hpa:
+      minReplicas: 2
+      maxReplicas: 5
   ## https://docs.gitlab.com/charts/charts/gitlab/kas
   kas:
-    minReplicas: 1
-    maxReplicas: 1
+    minReplicas: 2
+    maxReplicas: 10
     ingress:
       tls:
         secretName: cert-gitlab-kas
   ## https://docs.gitlab.com/charts/charts/gitlab/praefect
   #   praefect:
   gitlab-exporter:
-    enabled: false
+    enabled: true
 
 ## Installation & configuration of gitlab/gitlab-zoekt
 gitlab-zoekt:
@@ -1366,9 +1288,17 @@ gitlab-zoekt:
       gitlabUrl: '{{ include "gitlab.zoekt.indexer.internalApi.gitlabUrl" $ }}'
 
 registry:
+  metrics:
+    enabled: true
   hpa:
-    minReplicas: 1
-    maxReplicas: 1
+    minReplicas: 2
+    maxReplicas: 10
+    cpu:
+      targetAverageUtilization: "80"
+    memory:
+      targetAverageUtilization: "80"
+  metrics:
+    enabled: true
   ingress:
     tls:
       secretName: cert-gitlab-registry

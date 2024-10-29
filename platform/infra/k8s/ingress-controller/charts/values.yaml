@@ -537,7 +537,7 @@ defaultBackend:
     }
   ## @param defaultBackend.replicaCount Desired number of default backend pods
   ##
-  replicaCount: 1
+  replicaCount: 2
   ## Default backend pods' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param defaultBackend.podSecurityContext.enabled Enable Default backend pods' Security Context
@@ -766,7 +766,7 @@ defaultBackend:
   pdb:
     ## @param defaultBackend.pdb.create Enable/disable a Pod Disruption Budget creation for Default backend
     ##
-    create: false
+    create: true
     ## @param defaultBackend.pdb.minAvailable Minimum number/percentage of Default backend pods that should remain scheduled
     ##
     minAvailable: 1
@@ -903,7 +903,7 @@ rbac:
 pdb:
   ## @param pdb.create Enable/disable a Pod Disruption Budget creation for Controller
   ##
-  create: false
+  create: true
   ## @param pdb.minAvailable Minimum number/percentage of Controller pods that should remain scheduled
   ##
   minAvailable: 1
@@ -918,11 +918,11 @@ pdb:
 ## @param autoscaling.targetMemory Target Memory utilization percentage
 ##
 autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 11
-  targetCPU: ""
-  targetMemory: ""
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPU: "80"
+  targetMemory: "80"
 
 ## @section Metrics parameters
 

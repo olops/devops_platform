@@ -8,7 +8,7 @@ data "kubernetes_service_v1" "nginx" {
 
 resource "google_dns_record_set" "gitlab" {
   managed_zone = replace(var.domain, ".", "-")
-  name         = "gitlab.${var.domain}."
+  name         = "gitlab${var.host_suffix}.${var.domain}."
   type         = "A"
   rrdatas      = [data.kubernetes_service_v1.nginx.status.0.load_balancer.0.ingress.0.ip]
   ttl          = 300
@@ -16,7 +16,7 @@ resource "google_dns_record_set" "gitlab" {
 
 resource "google_dns_record_set" "registry" {
   managed_zone = replace(var.domain, ".", "-")
-  name         = "registry.${var.domain}."
+  name         = "registry${var.host_suffix}.${var.domain}."
   type         = "A"
   rrdatas      = [data.kubernetes_service_v1.nginx.status.0.load_balancer.0.ingress.0.ip]
   ttl          = 300
@@ -24,7 +24,7 @@ resource "google_dns_record_set" "registry" {
 
 resource "google_dns_record_set" "minio" {
   managed_zone = replace(var.domain, ".", "-")
-  name         = "minio.${var.domain}."
+  name         = "minio${var.host_suffix}.${var.domain}."
   type         = "A"
   rrdatas      = [data.kubernetes_service_v1.nginx.status.0.load_balancer.0.ingress.0.ip]
   ttl          = 300
@@ -32,7 +32,7 @@ resource "google_dns_record_set" "minio" {
 
 resource "google_dns_record_set" "kas" {
   managed_zone = replace(var.domain, ".", "-")
-  name         = "kas.${var.domain}."
+  name         = "kas${var.host_suffix}.${var.domain}."
   type         = "A"
   rrdatas      = [data.kubernetes_service_v1.nginx.status.0.load_balancer.0.ingress.0.ip]
   ttl          = 300
@@ -73,6 +73,11 @@ resource "helm_release" "gitlab" {
   set {
     name = "global.hosts.domain"
     value = var.domain
+  }
+
+  set {
+    name = "global.hosts.hostSuffix"
+    value = trimprefix(var.host_suffix, "-")
   }
 
   set {

@@ -7,6 +7,10 @@ variable "domain" {
     type = string
 }
 
+variable "host_suffix" {
+    type = string
+}
+
 variable "cert_issuer_email" {
     type = string
 }

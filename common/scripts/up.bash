@@ -8,9 +8,10 @@ ingress=false
 certman=false
 sonarqube=false
 gitlab=false
+observe=false
 all=false
 
-TEMP=`getopt --long -o "w:kicsga" "$@"`
+TEMP=`getopt --long -o "w:kicsgoa" "$@"`
 eval set -- "$TEMP"
 while true ; do
     case "$1" in
@@ -38,6 +39,10 @@ while true ; do
             gitlab=true
             shift 1
         ;;
+        -o)
+            observe=true
+            shift 1
+        ;;
         -a )
             all=true
             shift 1
@@ -51,9 +56,10 @@ done;
 if $all ; then 
     sonarqube=true ;
     gitlab=true ;
+    observe=true
 fi
 
-if [ $sonarqube ] || [ $gitlab ] ; then 
+if [ $sonarqube ] || [ $gitlab ] || [ $observe ] ; then 
     certman=true ;
 fi
 
@@ -65,7 +71,7 @@ if $ingress ; then
     k8s=true
 fi
 
-echo -e "ws=$ws\nk8s=$k8s\ningress=$ingress\ncertman=$certman\nsonarqube=$sonarqube\ngitlab=$gitlab"
+echo -e "ws=$ws\nk8s=$k8s\ningress=$ingress\ncertman=$certman\nsonarqube=$sonarqube\ngitlab=$gitlab\nobserve=$observe"
 
 echo "creating resources for $ws environment"
 
@@ -83,3 +89,4 @@ if $ingress ; then create platform/infra/k8s/ingress-controller ; fi
 if $certman ; then create platform/infra/k8s/cert-manager ; fi
 if $sonarqube ; then create platform/tools/sonarqube ; fi
 if $gitlab ; then create platform/tools/gitlab ; fi
+if $observe ; then create platform/tools/observability ; fi
