@@ -2,14 +2,15 @@
 ## DevOps Tools
 
 this provisions infra and tools to GCP:
-- GKE cluster
-- Certificate Manager
-- Nginx Ingress Controller
-- Gitlab Community Edition
-- SonarQube Community Edition
-- Grafana
-- Prometheus
-- Loki/Promtail
+- GKE cluster (`platform/infra/k8s/cluster`)
+- Certificate Manager (`platform/infra/k8s/cert-manager`)
+- Nginx Ingress Controller (`platform/infra/k8s/ingress-controller`)
+- Gitlab Community Edition (`platform/tools/gitlab`)
+- SonarQube Community Edition (`platform/tools/sonarqube`)
+- Observability Stack (`platform/tools/observability`)
+  - Grafana
+  - Prometheus
+  - Loki/Promtail
 
 ### Steps
 
@@ -69,7 +70,7 @@ gcloud container clusters get-credentials gke-cluster1-dev --region asia-northea
 ```
 
 5. retrieve Gitlab root user password.
-- url: https://gitlab-test.<base domain>
+- url: https://gitlab-test.`BASE_DOMAIN`
 - user: root
 - password:
 ```
@@ -78,14 +79,43 @@ kubectl get secret -n gitlab gitlab-gitlab-initial-root-password -ojsonpath='{.d
 
 6. create "demo" group in Gitlab
 
-7. create user token in SonarQube. then define CI/CD variable.
-- url: https://sonarqube.<base domain>
-define Gitlab CI/CD variable "SONAR_URL"
-- user: admin
-- password: admin (please update)
-- create user token and define Gitlab CI/CD variable "SONAR_TOKEN"
+7. create user token in sonarqube. then define CI/CD variables.
 
-8. connect Gitlab to deployment target Kubernetes cluster
+- Sonarqube Instance
+  - url: https://sonarqube.`BASE_DOMAIN`
+  - user: admin
+  - password: admin (please update)
+
+- CI/CD variables
+
+  - SONAR_URL
+    - https://sonarqube.`BASE_DOMAIN`
+
+  - SONAR_TOKEN
+    - created user token
+
+8. check Grafana
+
+- Instance
+  - url: https://grafana.`BASE_DOMAIN`
+  - user: admin
+  - password: prom-operator
+
+- metrics
+
+![metrics1](docs/images/grafana1.JPG)
+
+- logs
+
+![logs1](docs/images/grafana2.JPG)
+
+- alerts
+
+![alerts1](docs/images/grafana3.JPG)
+
+### Steps for each project
+
+1. connect Gitlab to deployment target Kubernetes cluster
 - under Operate -> Kuberentes Clusters, click on "Connect a cluster"
 - set name to "default" the register
 - will be provided with commands below. please execute
